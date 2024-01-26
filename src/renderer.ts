@@ -31,7 +31,8 @@ import "./index.css";
 import * as React from "react";
 import * as ReactDOMClient from "react-dom/client";
 
-import { App, getReduxStore } from "./app";
+import { App } from "./app";
+import { getReduxStore } from "./reducer";
 
 async function getStateAndRender() {
   // @ts-ignore

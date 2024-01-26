@@ -34,13 +34,14 @@ ipcMain.handle(
   (
     evt,
     categoryId: string,
+    categoryName: string,
     premadeActions: { delete: {} },
     opts: { wantsNewChild: boolean }
   ) => {
     return new Promise((res, rej) => {
       const template = [
         {
-          label: "Delete",
+          label: `Delete ${categoryName}`,
           click: () => {
             res(["delete", premadeActions.delete]);
           },

@@ -10,8 +10,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getSavedState: () => {
     return ipcRenderer.invoke("get-mainstore") ?? {};
   },
-  showContextMenu: (categoryId: string, actions: {}, opts: {}) => {
+  showContextMenu: (
+    categoryId: string,
+    categoryName: string,
+    actions: {},
+    opts: {}
+  ) => {
     console.log(`showig for ${categoryId}`);
-    return ipcRenderer.invoke("show-context-menu", categoryId, actions, opts);
+    return ipcRenderer.invoke(
+      "show-context-menu",
+      categoryId,
+      categoryName,
+      actions,
+      opts
+    );
   },
 });
