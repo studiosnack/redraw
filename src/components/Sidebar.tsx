@@ -22,13 +22,19 @@ export function Sidebar<T>({
   className?: string;
   sections: { title: string; items: [T, NestedListOf<T>] }[];
 }) {
+  const [selectedRow, setSelectedRow] = React.useState(null);
   return (
     <div className={className}>
       {sections.map((section) => {
         return (
           <React.Fragment key={section.title}>
             <SidebarHeader>{section.title}</SidebarHeader>
-            <SidebarItems items={section.items[1]} parent={section.items[0]} />
+            <SidebarItems
+              items={section.items[1]}
+              parent={section.items[0]}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
+            />
           </React.Fragment>
         );
       })}
@@ -84,18 +90,26 @@ const doublyInsetItem = css`
   padding-left: 28px;
 `;
 
+const selectedRow = css`
+  background-color: #a0b5ca;
+`;
+
 function SidebarItems<T>({
   className,
   items,
   parent,
   resolveId = (x: T) => x?.id ?? "id",
   resolveLabel = (x: T) => x?.name ?? "label",
+  setSelectedRow,
+  selectedRow,
 }: {
   className?: string;
   items: Array<[T, NestedListOf<T>] | T>;
   parent: T;
   resolveId?: (item: T) => string;
   resolveLabel?: (item: T) => string;
+  selectedRow?: string;
+  setSelectedRow?: (id: string) => any;
 }) {
   const dispatch = useAppDispatch();
   const { add: addCategory, toggleOpen } = bindActionCreators(
@@ -111,15 +125,95 @@ function SidebarItems<T>({
   return (
     <OrderedSidebarList className={className}>
       {items.map((itemOrItems, idx) => {
+        let children, item;
+        const hasChildren = Array.isArray(itemOrItems);
+        if (hasChildren) {
+          [item, children] = itemOrItems;
+        } else {
+          item = itemOrItems;
+        }
+
+        const itemId = resolveId(item);
+        const itemLabel = resolveLabel(item);
+
+        const childrenVisible = useAppSelector(
+          (state: RootState) => !!state.categories.sideBarOpenedState[itemId]
+        );
+
+        const isSelected = itemId === selectedRow;
+
         return (
-          <SidebarItem
-            key={resolveId(
-              Array.isArray(itemOrItems) ? itemOrItems[0] : itemOrItems
-            )}
-            itemOrItems={itemOrItems}
-            resolveLabel={resolveLabel}
-            resolveId={resolveId}
-          />
+          <React.Fragment key={itemId}>
+            <OrderedListItem>
+              <VStack>
+                <HStack
+                  className={cx(
+                    categoryLabelRow,
+                    alignCenter,
+                    !hasChildren && insetItem,
+                    isSelected && selectedRow
+                  )}
+                  onClick={() => setSelectedRow(itemId)}
+                >
+                  {hasChildren && (
+                    <IconButton onClick={() => toggleOpen({ id: itemId })}>
+                      <Arrow
+                        className={cx(
+                          basicArrow,
+                          childrenVisible && rotatedArrow
+                        )}
+                      />
+                    </IconButton>
+                  )}
+                  <CategoryLabel>{itemLabel}</CategoryLabel>{" "}
+                  <IconButton
+                    onClick={async () => {
+                      // @ts-ignore
+                      const res = await window.electronAPI.showContextMenu(
+                        itemId,
+                        itemLabel,
+                        {
+                          delete: categorySlice.actions.delete({ id: itemId }),
+                        },
+                        {
+                          wantsNewChild: !wantsNewChild,
+                        }
+                      );
+                      if (res?.[1] != null && res[0] === "delete") {
+                        dispatch(res[1]);
+                      } else if (res[0] === "add-child") {
+                        setWantsNewChild(true);
+                      }
+                    }}
+                  >
+                    <EllipsisIcon className={ellipsisClass} />
+                  </IconButton>
+                </HStack>
+                {hasChildren && childrenVisible && (
+                  <SidebarItems
+                    className={cx()}
+                    parent={item}
+                    items={children}
+                    resolveId={resolveId}
+                    resolveLabel={resolveLabel}
+                  />
+                )}
+                {wantsNewChild && (
+                  <OrderedListItem className={doublyInsetItem}>
+                    <SidebarInput
+                      parentId={itemId}
+                      onSubmit={(name, parentId) => {
+                        addCategory(name, parentId);
+                        setWantsNewChild(false);
+                      }}
+                      onClose={() => setWantsNewChild(false)}
+                      placeholder={`add ${itemLabel} child`}
+                    />
+                  </OrderedListItem>
+                )}
+              </VStack>
+            </OrderedListItem>
+          </React.Fragment>
         );
       })}
       {wantsNewChild && (
@@ -190,10 +284,11 @@ function SidebarInput({
 }
 
 const categoryLabelRow = css`
-  min-height: 24px;
+  /* min-height: 24px; */
 `;
 const CategoryLabel = styled.span`
   flex: 1;
+  line-height: 24px;
 `;
 
 const HStack = styled.div`
@@ -271,105 +366,3 @@ const rotatedArrow = css`
 const alignCenter = css`
   align-items: center;
 `;
-
-function SidebarItem<T>({
-  itemOrItems,
-  resolveId,
-  resolveLabel,
-}: {
-  itemOrItems: T | [T, NestedListOf<T>];
-  resolveId: (x: T) => string;
-  resolveLabel: (x: T) => string;
-}) {
-  let children, item;
-  const hasChildren = Array.isArray(itemOrItems);
-  if (hasChildren) {
-    [item, children] = itemOrItems;
-  } else {
-    item = itemOrItems;
-  }
-  const dispatch = useAppDispatch();
-  const itemId = resolveId(item);
-  const itemLabel = resolveLabel(item);
-
-  const childrenVisible = useAppSelector(
-    (state: RootState) => !!state.categories.sideBarOpenedState[itemId]
-  );
-
-  const { add: addCategory, toggleOpen } = bindActionCreators(
-    categorySlice.actions,
-    dispatch
-  );
-
-  const [wantsNewChild, setWantsNewChild] = React.useState(false);
-
-  // this checks does the current item's id act as a parentId?
-  // if so, it appears in the data
-  // const hasChildren = (data[itemId]?.length ?? 0) > 0;
-  return (
-    <OrderedListItem>
-      <VStack>
-        <HStack
-          className={cx(
-            categoryLabelRow,
-            alignCenter,
-            !hasChildren && insetItem
-          )}
-        >
-          {hasChildren && (
-            <IconButton onClick={() => toggleOpen({ id: itemId })}>
-              <Arrow
-                className={cx(basicArrow, childrenVisible && rotatedArrow)}
-              />
-            </IconButton>
-          )}
-          <CategoryLabel>{itemLabel}</CategoryLabel>{" "}
-          <IconButton
-            onClick={async () => {
-              // @ts-ignore
-              const res = await window.electronAPI.showContextMenu(
-                itemId,
-                itemLabel,
-                {
-                  delete: categorySlice.actions.delete({ id: itemId }),
-                },
-                {
-                  wantsNewChild: !wantsNewChild,
-                }
-              );
-              if (res?.[1] != null && res[0] === "delete") {
-                dispatch(res[1]);
-              } else if (res[0] === "add-child") {
-                setWantsNewChild(true);
-              }
-            }}
-          >
-            <EllipsisIcon className={ellipsisClass} />
-          </IconButton>
-        </HStack>
-        {hasChildren && childrenVisible && (
-          <SidebarItems
-            className={cx()}
-            parent={item}
-            items={children}
-            resolveId={resolveId}
-            resolveLabel={resolveLabel}
-          />
-        )}
-        {wantsNewChild && (
-          <OrderedListItem className={doublyInsetItem}>
-            <SidebarInput
-              parentId={itemId}
-              onSubmit={(name, parentId) => {
-                addCategory(name, parentId);
-                setWantsNewChild(false);
-              }}
-              onClose={() => setWantsNewChild(false)}
-              placeholder={`add ${itemLabel} child`}
-            />
-          </OrderedListItem>
-        )}
-      </VStack>
-    </OrderedListItem>
-  );
-}
