@@ -84,7 +84,7 @@ const selectCategoryOrdering = (state: RootState) => state.categories.ordering;
 export const selectResolvedCategoryList = createSelector(
   selectCategoryMap,
   selectCategoryOrdering,
-  (categoryMap, categoryOrdering) => {
+  (categoryMap, categoryOrdering): [Category, NestedListOf<Category>] => {
     function resolveOrdering<T>(ids: string[]): NestedListOf<Category> {
       return ids.map((id) => {
         const item = categoryMap.find((cat) => cat.id === id);
@@ -93,9 +93,10 @@ export const selectResolvedCategoryList = createSelector(
           : item;
       });
     }
-    return [
-      { id: "root", name: "root", parentId: null },
+    const resolvedList: [Category, NestedListOf<Category>] = [
+      { id: "root", name: "root", parentId: "null" },
       resolveOrdering(categoryOrdering["root"]),
     ];
+    return resolvedList;
   }
 );

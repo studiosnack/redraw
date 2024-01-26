@@ -59,8 +59,7 @@ const OrderedSidebarList = styled.ul`
   flex: 1;
   flex-flow: column;
   list-style: none;
-  margin: 0;
-  margin: 6px 0;
+  // margin: 6px 0 0;
   padding: 0;
 
   ul {
@@ -72,10 +71,17 @@ const OrderedListItem = styled.li`
   display: flex;
   font-size: 12px;
   flex: 1;
-  margin: 6px 0;
+  // margin: 6px 0;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 const insetItem = css`
   padding-left: 14px;
+`;
+const doublyInsetItem = css`
+  padding-left: 28px;
 `;
 
 function SidebarItems<T>({
@@ -97,6 +103,11 @@ function SidebarItems<T>({
     dispatch
   );
 
+  const [wantsNewChild, setWantsNewChild] = React.useState(false);
+  const handleInputSubmit = (value: string, parentId: string) => {
+    addCategory(value, parentId);
+  };
+
   return (
     <OrderedSidebarList className={className}>
       {items.map((itemOrItems, idx) => {
@@ -111,15 +122,15 @@ function SidebarItems<T>({
           />
         );
       })}
-      <OrderedListItem className={cx(insetItem)}>
-        <SidebarInput
-          onSubmit={(value, parentId) => {
-            addCategory(value, parentId);
-          }}
-          parentId={resolveId(parent)}
-          placeholder={`add ${resolveLabel(parent)} category`}
-        />
-      </OrderedListItem>
+      {wantsNewChild && (
+        <OrderedListItem className={cx(insetItem)}>
+          <SidebarInput
+            onSubmit={handleInputSubmit}
+            parentId={resolveId(parent)}
+            placeholder={`add ${resolveLabel(parent)} category`}
+          />
+        </OrderedListItem>
+      )}
     </OrderedSidebarList>
   );
 }
@@ -178,6 +189,9 @@ function SidebarInput({
   );
 }
 
+const categoryLabelRow = css`
+  min-height: 24px;
+`;
 const CategoryLabel = styled.span`
   flex: 1;
 `;
@@ -262,12 +276,10 @@ function SidebarItem<T>({
   itemOrItems,
   resolveId,
   resolveLabel,
-  data,
 }: {
   itemOrItems: T | [T, NestedListOf<T>];
   resolveId: (x: T) => string;
   resolveLabel: (x: T) => string;
-  data: { [key: string]: T[] };
 }) {
   let children, item;
   const hasChildren = Array.isArray(itemOrItems);
@@ -297,7 +309,13 @@ function SidebarItem<T>({
   return (
     <OrderedListItem>
       <VStack>
-        <HStack className={cx(alignCenter, !hasChildren && insetItem)}>
+        <HStack
+          className={cx(
+            categoryLabelRow,
+            alignCenter,
+            !hasChildren && insetItem
+          )}
+        >
           {hasChildren && (
             <IconButton onClick={() => toggleOpen({ id: itemId })}>
               <Arrow
@@ -316,7 +334,7 @@ function SidebarItem<T>({
                   delete: categorySlice.actions.delete({ id: itemId }),
                 },
                 {
-                  wantsNewChild: !hasChildren && !wantsNewChild,
+                  wantsNewChild: !wantsNewChild,
                 }
               );
               if (res?.[1] != null && res[0] === "delete") {
@@ -329,30 +347,28 @@ function SidebarItem<T>({
             <EllipsisIcon className={ellipsisClass} />
           </IconButton>
         </HStack>
-        {hasChildren
-          ? childrenVisible && (
-              <SidebarItems
-                className={cx()}
-                parent={item}
-                items={children}
-                resolveId={resolveId}
-                resolveLabel={resolveLabel}
-              />
-            )
-          : wantsNewChild && (
-              <OrderedSidebarList>
-                <OrderedListItem>
-                  <SidebarInput
-                    parentId={itemId}
-                    onSubmit={(name, parentId) => {
-                      addCategory(name, parentId);
-                      setWantsNewChild(false);
-                    }}
-                    onClose={() => setWantsNewChild(false)}
-                  />
-                </OrderedListItem>
-              </OrderedSidebarList>
-            )}
+        {hasChildren && childrenVisible && (
+          <SidebarItems
+            className={cx()}
+            parent={item}
+            items={children}
+            resolveId={resolveId}
+            resolveLabel={resolveLabel}
+          />
+        )}
+        {wantsNewChild && (
+          <OrderedListItem className={doublyInsetItem}>
+            <SidebarInput
+              parentId={itemId}
+              onSubmit={(name, parentId) => {
+                addCategory(name, parentId);
+                setWantsNewChild(false);
+              }}
+              onClose={() => setWantsNewChild(false)}
+              placeholder={`add ${itemLabel} child`}
+            />
+          </OrderedListItem>
+        )}
       </VStack>
     </OrderedListItem>
   );
