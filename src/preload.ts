@@ -16,7 +16,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     actions: {},
     opts: {}
   ) => {
-    console.log(`showig for ${categoryId}`);
     return ipcRenderer.invoke(
       "show-context-menu",
       categoryId,

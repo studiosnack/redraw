@@ -4,9 +4,8 @@ import { css, cx } from "@emotion/css";
 
 import type { BaseStoreType } from "./reducer";
 
-import { selectResolvedCategoryList } from "./slices/categories";
 import { useAppSelector } from "./hooks";
-import { Sidebar } from "./components/Sidebar";
+import { CategorySidebar } from "./components/CategorySidebar";
 
 const AppShell = styled.div`
   display: flex;
@@ -35,19 +34,10 @@ export const App = ({ reduxStore }: { reduxStore: BaseStoreType }) => {
 };
 
 const Application = () => {
-  const categoryData = useAppSelector(selectResolvedCategoryList);
-
   return (
     <AppShell>
       <SidebarContainer>
-        <Sidebar
-          sections={[
-            {
-              title: "Categories",
-              items: categoryData,
-            },
-          ]}
-        />
+        <CategorySidebar />
       </SidebarContainer>
       <MainContentContainer />
     </AppShell>

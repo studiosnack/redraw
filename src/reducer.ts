@@ -1,5 +1,6 @@
 import { createListenerMiddleware, configureStore } from "@reduxjs/toolkit";
 import { categorySlice, type CategoryState } from "./slices/categories";
+import { appStateSlice, type AppState } from "./slices/appstate";
 
 const listenerMiddleware = createListenerMiddleware();
 
@@ -21,6 +22,7 @@ export const getReduxStore = (preloadedState?: {
   let store = configureStore({
     reducer: {
       categories: categorySlice.reducer,
+      application: appStateSlice.reducer,
     },
     preloadedState,
     // @ts-ignore

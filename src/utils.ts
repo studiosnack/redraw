@@ -6,3 +6,4 @@ export const customId = customAlphabet(
 );
 
 export type NestedListOf<T> = Array<T | NestedListOf<T>>;
+export type NestedHierarchyOf<T> = [T, Array<NestedHierarchyOf<T> | T>];

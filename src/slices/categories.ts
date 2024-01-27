@@ -1,15 +1,8 @@
-import {
-  createSlice,
-  configureStore,
-  PayloadAction,
-  bindActionCreators,
-  createListenerMiddleware,
-  createSelector,
-} from "@reduxjs/toolkit";
+import { createSlice, PayloadAction, createSelector } from "@reduxjs/toolkit";
 
 import { RootState } from "src/reducer";
 
-import { customId, type NestedListOf } from "../utils";
+import { customId, type NestedHierarchyOf, type NestedListOf } from "../utils";
 
 export type Category = {
   id: string;
@@ -68,24 +61,35 @@ export const categorySlice = createSlice({
 
       state.ordering;
     },
-    toggleOpen: (state, action: PayloadAction<{ id: string }>) => {
-      const { id } = action.payload;
-      if (state.sideBarOpenedState[id] === true) {
-        delete state.sideBarOpenedState[id];
-      } else {
-        state.sideBarOpenedState[id] = true;
-      }
-    },
   },
 });
 
 const selectCategoryMap = (state: RootState) => state.categories.categories;
 const selectCategoryOrdering = (state: RootState) => state.categories.ordering;
+const selectSpecificCategoryOrdering = (state: RootState, categoryId: string) =>
+  state.categories.ordering[categoryId];
+
+// get the number of immediate children of a category
+export const selectCategoryChildCount = createSelector(
+  selectSpecificCategoryOrdering,
+  (categoryChildOrdering) => {
+    return categoryChildOrdering?.length ?? 0;
+  }
+);
+// find if a category has children at all
+export const selectHasCategoryChildren = createSelector(
+  selectCategoryChildCount,
+  (count) => count > 0
+);
+
+// return a nested list of lists suitable for rendering a Sidebar
 export const selectResolvedCategoryList = createSelector(
   selectCategoryMap,
   selectCategoryOrdering,
-  (categoryMap, categoryOrdering): [Category, NestedListOf<Category>] => {
-    function resolveOrdering<T>(ids: string[]): NestedListOf<Category> {
+  (categoryMap, categoryOrdering): NestedHierarchyOf<Category> => {
+    function resolveOrdering<T>(
+      ids: string[]
+    ): Array<NestedHierarchyOf<Category> | Category> {
       return ids.map((id) => {
         const item = categoryMap.find((cat) => cat.id === id);
         return Array.isArray(categoryOrdering[id])
@@ -93,7 +97,7 @@ export const selectResolvedCategoryList = createSelector(
           : item;
       });
     }
-    const resolvedList: [Category, NestedListOf<Category>] = [
+    const resolvedList: NestedHierarchyOf<Category> = [
       { id: "root", name: "root", parentId: "null" },
       resolveOrdering(categoryOrdering["root"]),
     ];

@@ -97,8 +97,8 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 // app.on("ready", createWindow);
 app.whenReady().then(async () => {
-  // await session.defaultSession.loadExtension(reactDevToolsPath);
-  // console.log(reactDevToolsPath);
+  await session.defaultSession.loadExtension(reactDevToolsPath);
+  console.log(reactDevToolsPath);
   createWindow();
 });
 
