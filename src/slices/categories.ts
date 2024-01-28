@@ -64,8 +64,18 @@ export const categorySlice = createSlice({
   },
 });
 
-const selectCategoryMap = (state: RootState) => state.categories.categories;
-const selectCategoryOrdering = (state: RootState) => state.categories.ordering;
+export const selectCategoryMap = (state: RootState) =>
+  state.categories.categories;
+export const selectAddressableCategoryMap = createSelector(
+  selectCategoryMap,
+  (catMap) => {
+    return catMap.reduce((prev, curr) => {
+      return { ...prev, [curr.id]: curr };
+    }, {});
+  }
+);
+export const selectCategoryOrdering = (state: RootState) =>
+  state.categories.ordering;
 const selectSpecificCategoryOrdering = (state: RootState, categoryId: string) =>
   state.categories.ordering[categoryId];
 
@@ -80,6 +90,14 @@ export const selectCategoryChildCount = createSelector(
 export const selectHasCategoryChildren = createSelector(
   selectCategoryChildCount,
   (count) => count > 0
+);
+
+export const selectCategoryById = createSelector(
+  selectCategoryMap,
+  (state: RootState, categoryId: string) => categoryId,
+  (categoryMap: Category[], categoryId: string) => {
+    return categoryMap.find((cat) => cat.id === categoryId);
+  }
 );
 
 // return a nested list of lists suitable for rendering a Sidebar

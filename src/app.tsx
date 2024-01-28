@@ -6,6 +6,7 @@ import type { BaseStoreType } from "./reducer";
 
 import { useAppSelector } from "./hooks";
 import { CategorySidebar } from "./components/CategorySidebar";
+import { CategoryView } from "./components/CategoryView";
 
 const AppShell = styled.div`
   display: flex;
@@ -39,7 +40,9 @@ const Application = () => {
       <SidebarContainer>
         <CategorySidebar />
       </SidebarContainer>
-      <MainContentContainer />
+      <MainContentContainer>
+        <CategoryView />
+      </MainContentContainer>
     </AppShell>
   );
 };

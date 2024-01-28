@@ -1,19 +1,17 @@
-import { createSlice, PayloadAction, createSelector } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "src/reducer";
-
-import { customId, type NestedListOf } from "../utils";
+import type { RootState } from "../reducer";
 
 export type AppState = {
   sideBarOpenedState: { [id: string]: boolean };
   wantsChildInput: { [id: string]: boolean };
-  selectedRow?: string;
+  selectedCategoryRow?: string;
 };
 
 const initialState: AppState = {
   sideBarOpenedState: {},
   wantsChildInput: {},
-  selectedRow: undefined,
+  selectedCategoryRow: undefined,
 };
 
 export const appStateSlice = createSlice({
@@ -38,11 +36,14 @@ export const appStateSlice = createSlice({
     },
     toggleSelectedRow: (state, action: PayloadAction<string>) => {
       const id = action.payload;
-      if (state.selectedRow === id) {
-        delete state.selectedRow;
+      if (state.selectedCategoryRow === id) {
+        delete state.selectedCategoryRow;
       } else {
-        state.selectedRow = id;
+        state.selectedCategoryRow = id;
       }
     },
   },
 });
+
+export const selectCurrentCategoryId = (state: RootState) =>
+  state.application.selectedCategoryRow;

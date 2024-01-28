@@ -9,7 +9,7 @@ import {
   categorySlice,
   selectHasCategoryChildren,
 } from "../slices/categories";
-import { appStateSlice } from "../slices/appstate";
+import { appStateSlice, selectCurrentCategoryId } from "../slices/appstate";
 
 import { type RootState } from "../reducer";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -111,7 +111,7 @@ function CategoryRow({ item }: { item: Category }) {
     }
   };
 
-  const selectedRow = useAppSelector((state) => state.application.selectedRow);
+  const selectedRow = useAppSelector(selectCurrentCategoryId);
   const isSelected = selectedRow === itemId;
   const { toggleSidebarOpen: onToggle, toggleSelectedRow: setSelectedRow } =
     bindActionCreators(appStateSlice.actions, dispatch);
