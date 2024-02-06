@@ -59,7 +59,21 @@ export const categorySlice = createSlice({
         category.parentId
       ].filter((catId) => catId !== action.payload.id);
 
-      state.ordering;
+      // state.ordering;
+    },
+    move: (
+      state,
+      action: PayloadAction<{ oldParentId: string; newParentId: string }>
+    ) => {
+      const { oldParentId, newParentId } = action.payload;
+      const newParentOrdering = state.ordering[oldParentId].filter(
+        (id) => id !== newParentId
+      );
+
+      state.ordering[newParentId] = newParentOrdering;
+      if (state.ordering[oldParentId].includes(newParentId)) {
+        state.ordering[oldParentId] = [newParentId];
+      }
     },
   },
 });
@@ -116,7 +130,7 @@ export const selectResolvedCategoryList = createSelector(
       });
     }
     const resolvedList: NestedHierarchyOf<Category> = [
-      { id: "root", name: "root", parentId: "null" },
+      { id: "root", name: "Category", parentId: "null" },
       resolveOrdering(categoryOrdering["root"]),
     ];
     return resolvedList;

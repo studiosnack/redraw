@@ -1,6 +1,8 @@
 import { createListenerMiddleware, configureStore } from "@reduxjs/toolkit";
 import { categorySlice, type CategoryState } from "./slices/categories";
 import { appStateSlice, type AppState } from "./slices/appstate";
+import { itemsSlice, type ItemState } from "./slices/items";
+import { fitsSlice, type FitState } from "./slices/fits";
 
 const listenerMiddleware = createListenerMiddleware();
 
@@ -23,6 +25,8 @@ export const getReduxStore = (preloadedState?: {
     reducer: {
       categories: categorySlice.reducer,
       application: appStateSlice.reducer,
+      items: itemsSlice.reducer,
+      fits: fitsSlice.reducer,
     },
     preloadedState,
     // @ts-ignore

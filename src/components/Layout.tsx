@@ -15,3 +15,27 @@ export const VStack = styled.div`
 export const alignCenter = css`
   align-items: center;
 `;
+
+export const TitleBar = styled.div`
+  -webkit-app-region: drag;
+  background: var(--light-theme-titlebar-color);
+
+  @media (prefers-color-scheme: dark) {
+    background: var(--dark-theme-titlebar-color);
+  }
+`;
+export const WindowHeader = styled.h3`
+  font-weight: bold;
+  font-size: 14px;
+  margin-left: 1em;
+`;
+
+export const WindowBody = styled.div`
+  background: var(--light-theme-body-color);
+  display: flex;
+  flex: 1;
+
+  @media (prefers-color-scheme: dark) {
+    background: var(--dark-theme-body-color);
+  }
+`;

@@ -13,8 +13,19 @@ body {
   color-scheme: light dark;
   --special-text-color: hsla(60, 100%, 50%, 0.5);
   --border-color: black;
+  /* the color of a system icon during light ui mode */
   --light-ui-icon-color: #bbb;
+  /* the color of a system icon in dark ui mode */
   --dark-ui-icon-color: #ddd;
+
+  --light-theme-accent-color: #267da684;
+  --dark-theme-accent-color: #327391aa;
+
+  --light-theme-titlebar-color: #e5e5e5;
+  --dark-theme-titlebar-color: #444;
+
+  --light-theme-body-color: #fff;
+  --dark-theme-body-color: #222;
 }
 
 @media (prefers-color-scheme: dark) {

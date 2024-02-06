@@ -27,16 +27,23 @@ import { HStack, alignCenter } from "./Layout";
 import { ArrowIcon, EllipsisIcon, IconButton } from "./Icons";
 
 const categoryLabelRow = css`
-  padding-right: 12px;
+  padding-right: 4px;
 `;
 const CategoryLabel = styled.span`
   flex: 1;
   line-height: 24px;
 `;
+const boldLabel = css`
+  font-weight: bold;
+`;
 
 const selectedRowStyle = css`
-  background-color: #327391;
+  background-color: var(--light-theme-accent-color);
   border-radius: 4px;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--dark-theme-accent-color);
+  }
 `;
 
 const basicArrow = css`
@@ -78,7 +85,7 @@ const ellipsisClass = css`
   }
 `;
 
-function CategoryRow({ item }: { item: Category }) {
+function CategoryRow({ item, depth }: { item: Category; depth: number }) {
   const itemId = item.id;
 
   const dispatch = useAppDispatch();
@@ -99,6 +106,10 @@ function CategoryRow({ item }: { item: Category }) {
       item.name,
       {
         delete: categorySlice.actions.delete({ id: item.id }),
+        moveSiblingsInto: categorySlice.actions.move({
+          oldParentId: item.parentId,
+          newParentId: item.id,
+        }),
       },
       {
         wantsNewChild: !wantsChildInputState[item.id],
@@ -106,8 +117,11 @@ function CategoryRow({ item }: { item: Category }) {
     );
     if (res?.[1] != null && res[0] === "delete") {
       dispatch(res[1]);
+    } else if (res?.[1] != null && res[0] === "move") {
+      dispatch(res[1]);
     } else if (res[0] === "add-child") {
       setWantsNewChild(item.id);
+    } else if (res[0] === "move") {
     }
   };
 
@@ -116,17 +130,18 @@ function CategoryRow({ item }: { item: Category }) {
   const { toggleSidebarOpen: onToggle, toggleSelectedRow: setSelectedRow } =
     bindActionCreators(appStateSlice.actions, dispatch);
 
-  const sidebarOpenedState = useAppSelector(
+  const sideBarOpenedState = useAppSelector(
     (state: RootState) => state.application.sideBarOpenedState
   );
 
   const hasChildren = useAppSelector((state) =>
     selectHasCategoryChildren(state, itemId)
   );
-  const childrenVisible = sidebarOpenedState[itemId];
+  const childrenVisible = sideBarOpenedState[itemId];
 
   return (
     <HStack
+      tabIndex={0}
       className={cx(
         categoryLabelRow,
         alignCenter,
@@ -134,6 +149,12 @@ function CategoryRow({ item }: { item: Category }) {
         isSelected && selectedRowStyle
       )}
       onClick={() => setSelectedRow(itemId)}
+      onKeyUp={(evt) => {
+        if (evt.key === "ArrowRight" || evt.key === "ArrowLeft") {
+          onToggle(itemId);
+        }
+      }}
+      onKeyPress={() => setSelectedRow(itemId)}
     >
       {hasChildren && (
         <IconButton
@@ -147,7 +168,9 @@ function CategoryRow({ item }: { item: Category }) {
           />
         </IconButton>
       )}
-      <CategoryLabel>{item.name}</CategoryLabel>{" "}
+      <CategoryLabel className={depth === 0 && boldLabel}>
+        {item.name}
+      </CategoryLabel>{" "}
       <IconButton
         onClick={(evt) => {
           evt.stopPropagation();
@@ -178,8 +201,12 @@ const AddCategoryAccessory = ({ item }: { item: Category }) => {
     <OrderedListItem className={cx(insetItem)}>
       <SidebarInput
         onSubmit={handleInputSubmit}
-        // parentId={item.id}
-        placeholder={`add ${item.name} category`}
+        placeholder={
+          // the root parent id is the string null, i'm sorry
+          item.parentId !== "null"
+            ? `add ${item.name} category`
+            : "Add new category"
+        }
         item={item}
         onKeyUp={(evt) => {
           evt.key === "Escape" &&
@@ -193,7 +220,7 @@ const AddCategoryAccessory = ({ item }: { item: Category }) => {
 
 export function CategorySidebar({ className }: { className?: string }) {
   const categoryData = useAppSelector(selectResolvedCategoryList);
-  const sidebarOpenedState = useAppSelector(
+  const sideBarOpenedState = useAppSelector(
     (state: RootState) => state.application.sideBarOpenedState
   );
   const wantsChildInputState = useAppSelector(
@@ -201,7 +228,7 @@ export function CategorySidebar({ className }: { className?: string }) {
   );
 
   const doesItemHaveVisibleChildren = (item: Category) => {
-    return sidebarOpenedState[item.id];
+    return sideBarOpenedState[item.id];
   };
 
   const itemWantsAccessory = (item: Category) => {
@@ -210,8 +237,9 @@ export function CategorySidebar({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <SidebarHeader>Categories</SidebarHeader>
+      {/* <SidebarHeader>Categories</SidebarHeader> */}
       <SidebarItems
+        depth={0}
         items={categoryData[1]}
         parent={categoryData[0]}
         childrenVisible={doesItemHaveVisibleChildren}

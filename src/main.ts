@@ -35,7 +35,7 @@ ipcMain.handle(
     evt,
     categoryId: string,
     categoryName: string,
-    premadeActions: { delete: {} },
+    premadeActions: { delete: {}; moveSiblingsInto?: {} },
     opts: { wantsNewChild: boolean }
   ) => {
     return new Promise((res, rej) => {
@@ -46,6 +46,14 @@ ipcMain.handle(
             res(["delete", premadeActions.delete]);
           },
         },
+        // premadeActions.moveSiblingsInto
+        //   ? {
+        //       label: "move siblings into this category",
+        //       click: () => {
+        //         res(["move", premadeActions.moveSiblingsInto]);
+        //       },
+        //     }
+        //   : null,
         opts.wantsNewChild
           ? {
               label: "Add Child Category",

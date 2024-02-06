@@ -15,6 +15,7 @@ export type SidebarRowProps<T> = {
   // children?: T[];
   hasChildren?: boolean;
   childrenVisible?: boolean;
+  depth: number;
 };
 
 export const OrderedSidebarList = styled.ul`
@@ -56,6 +57,7 @@ export function SidebarItems<T>({
   accessoryVisible,
   SidebarRow,
   BottomAccessory,
+  depth,
 }: {
   className?: string;
   items: Array<T | NestedHierarchyOf<T>>;
@@ -65,6 +67,7 @@ export function SidebarItems<T>({
   accessoryVisible?: (item: T) => boolean;
   SidebarRow: React.ElementType<SidebarRowProps<T>>;
   BottomAccessory: React.ElementType<{ item: T }>;
+  depth: number;
 }) {
   return (
     <OrderedSidebarList className={className}>
@@ -80,27 +83,38 @@ export function SidebarItems<T>({
 
         const itemId = resolveId ? resolveId(item) : _idx;
 
+        const canDetectChildrenVisible = childrenVisible != null;
+
         return (
           <React.Fragment key={itemId}>
             <OrderedListItem>
               <VStack>
                 {SidebarRow != null && (
-                  <SidebarRow item={item} hasChildren={hasChildren} />
+                  <SidebarRow
+                    item={item}
+                    hasChildren={hasChildren}
+                    depth={depth}
+                  />
                 )}
 
-                {hasChildren &&
-                  (childrenVisible != null ? childrenVisible(item) : true) && (
-                    <SidebarItems
-                      className={cx()}
-                      parent={item}
-                      items={children}
-                      resolveId={resolveId}
-                      childenVisible={childrenVisible}
-                      accessoryVisible={accessoryVisible}
-                      SidebarRow={SidebarRow}
-                      BottomAccessory={BottomAccessory}
-                    />
-                  )}
+                {hasChildren
+                  ? // just show children if we don't have a way to detect them
+                    (canDetectChildrenVisible
+                      ? childrenVisible(item)
+                      : true) && (
+                      <SidebarItems
+                        className={cx()}
+                        depth={depth + 1}
+                        parent={item}
+                        items={children}
+                        resolveId={resolveId}
+                        childrenVisible={childrenVisible}
+                        accessoryVisible={accessoryVisible}
+                        SidebarRow={SidebarRow}
+                        BottomAccessory={BottomAccessory}
+                      />
+                    )
+                  : accessoryVisible?.(item) && <BottomAccessory item={item} />}
               </VStack>
             </OrderedListItem>
           </React.Fragment>
