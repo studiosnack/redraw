@@ -10,7 +10,7 @@ import {
   type NestedListOf,
 } from "../utils";
 
-type Fit = {
+export type Fit = {
   id: string;
   name?: string;
   items: string[];
@@ -58,3 +58,35 @@ export const fitsSlice = createSlice({
     },
   },
 });
+
+const selectFits = (state: RootState) => state.fits.log;
+const getSelectedAppRow = (state: RootState) =>
+  state.application.selectedCategoryRow;
+const getSelectedAppView = (state: RootState) => state.application.currentView;
+const filterFitsByTypeAndAppContext = (
+  fits: Fit[],
+  selectedAppRow: string,
+  currentAppView: RootState["application"]["currentView"]
+): Fit[] => {
+  if (currentAppView !== "fit") {
+    return [];
+  } else {
+    switch (selectedAppRow) {
+      case "root":
+        return fits;
+      case "lastweek":
+        return fits.filter((f) => f.dateAdded >= Date.now() - 86400 * 7 * 1000);
+      default:
+        return fits;
+    }
+    if (selectedAppRow === "root") {
+      return;
+    }
+  }
+};
+export const selectFitsBySelectedRow = createSelector(
+  selectFits,
+  getSelectedAppRow,
+  getSelectedAppView,
+  filterFitsByTypeAndAppContext
+);

@@ -1,5 +1,7 @@
 import * as React from "react";
-
+import { bindActionCreators } from "@reduxjs/toolkit";
+import { useAppSelector, useAppDispatch } from "../hooks";
+import { fitsSlice, selectFitsBySelectedRow, type Fit } from "../slices/fits";
 import styled from "@emotion/styled";
 
 const TitleBar = styled.div`
@@ -24,13 +26,41 @@ const CategoryBody = styled.div`
   }
 `;
 
+const rowMapping: { [key: string]: string } = {
+  root: "Oufits",
+  lastweek: "Last week's outfits",
+  past: "Older outfits (archive)",
+};
 export function FitView() {
+  const selectedRow = useAppSelector(
+    ({ application }) => application.selectedCategoryRow
+  );
+  const dispatch = useAppDispatch();
+
+  const fitsToShow = useAppSelector(selectFitsBySelectedRow);
+
+  const { addNew: addNewFit } = bindActionCreators(fitsSlice.actions, dispatch);
+
   return (
     <React.Fragment>
       <TitleBar>
-        <CategoryHeader>&nbsp;</CategoryHeader>
+        <CategoryHeader>&nbsp; {rowMapping[selectedRow] ?? ""}</CategoryHeader>
       </TitleBar>
-      <CategoryBody></CategoryBody>
+      <CategoryBody>
+        <button onClick={addNewFit}>Add new fit for today</button>
+        <ol>
+          {fitsToShow.map((f) => (
+            <li key={f.id}>
+              <FitRow fit={f} />
+            </li>
+          ))}
+        </ol>
+      </CategoryBody>
     </React.Fragment>
   );
+}
+
+export function FitRow({ fit }: { fit: Fit }) {
+  const d = new Date(fit.dateAdded);
+  return <div>{d.toString()}</div>;
 }
