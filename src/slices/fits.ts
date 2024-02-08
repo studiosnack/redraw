@@ -56,6 +56,16 @@ export const fitsSlice = createSlice({
         state.log[idx].items.push(itemId);
       }
     },
+    removeItem: (
+      state,
+      action: PayloadAction<{ itemId: string; fitId: string }>
+    ) => {
+      const { itemId, fitId } = action.payload;
+      const idx = state.log.findIndex((fit) => fit.id === fitId);
+      if (idx !== -1) {
+        state.log[idx].items.filter((id) => id !== itemId);
+      }
+    },
   },
 });
 
@@ -89,4 +99,11 @@ export const selectFitsBySelectedRow = createSelector(
   getSelectedAppRow,
   getSelectedAppView,
   filterFitsByTypeAndAppContext
+);
+
+export const selectCurrentFit = createSelector(
+  selectFits,
+  (fits: Fit[]): Fit | void => {
+    return fits.sort((a, b) => a.dateAdded - b.dateAdded)[0];
+  }
 );

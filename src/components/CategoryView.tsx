@@ -1,10 +1,10 @@
 import * as React from "react";
-import { createSelector } from "@reduxjs/toolkit";
-import { useDispatch } from "react-redux";
+import { createSelector, bindActionCreators } from "@reduxjs/toolkit";
+// import { useDispatch } from "react-redux";
 
 import styled from "@emotion/styled";
 
-import { useAppSelector } from "../hooks";
+import { useAppSelector, useAppDispatch } from "../hooks";
 
 import { selectCurrentCategoryId } from "../slices/appstate";
 import {
@@ -13,6 +13,7 @@ import {
 } from "../slices/categories";
 
 import { itemsSlice, selectItemsAsArray } from "../slices/items";
+import { selectCurrentFit, fitsSlice } from "../slices/fits";
 
 const currentCategorySelector = createSelector(
   selectAddressableCategoryMap,
@@ -56,8 +57,15 @@ const selectItemsWithCurrentCategory = createSelector(
 );
 
 export function CategoryView() {
+  const dispatch = useAppDispatch();
   const currentCategory = useAppSelector(currentCategorySelector);
   const categoryItems = useAppSelector(selectItemsWithCurrentCategory);
+
+  const currentFit = useAppSelector(selectCurrentFit);
+  const { addItem: addToCurrentFit } = bindActionCreators(
+    fitsSlice.actions,
+    dispatch
+  );
 
   return (
     <React.Fragment>
@@ -73,7 +81,24 @@ export function CategoryView() {
             const nameProp = item.properties.find(
               ({ label }) => label === "Name"
             );
-            return <li key={item.id}>{nameProp.value}</li>;
+            return (
+              <li key={item.id}>
+                {nameProp.value}
+                {currentFit && (
+                  <button
+                    onClick={() => {
+                      // console.log(item.id, currentFit.id);
+                      addToCurrentFit({
+                        itemId: item.id,
+                        fitId: currentFit.id,
+                      });
+                    }}
+                  >
+                    ({currentFit.items.includes(item.id) ? "-" : "+"})
+                  </button>
+                )}
+              </li>
+            );
           })}
         </ul>
       </CategoryBody>
@@ -82,7 +107,7 @@ export function CategoryView() {
 }
 
 function ItemInput({ currentCategory }: { currentCategory?: Category }) {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [inputText, setInputText] = React.useState("");
   const handleSubmit = (evt: React.SyntheticEvent<HTMLFormElement>) => {
     evt.preventDefault();

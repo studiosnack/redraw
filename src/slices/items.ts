@@ -81,7 +81,14 @@ export const itemsSlice = createSlice({
   },
 });
 
-export const selectItems = (state: ItemState) => state.items.items;
+export const selectItems = (state: RootState) => state.items.items;
 export const selectItemsAsArray = createSelector(selectItems, (items) =>
   Object.values(items)
 );
+
+export const getItemName = (item: Item) => {
+  return (
+    item.properties.find((p) => p.label === "Name")?.value ??
+    "Can't find item name"
+  );
+};

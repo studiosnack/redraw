@@ -2,6 +2,7 @@ import * as React from "react";
 import { bindActionCreators } from "@reduxjs/toolkit";
 import { useAppSelector, useAppDispatch } from "../hooks";
 import { fitsSlice, selectFitsBySelectedRow, type Fit } from "../slices/fits";
+import { selectItems, getItemName } from "../slices/items";
 import styled from "@emotion/styled";
 
 const TitleBar = styled.div`
@@ -61,6 +62,25 @@ export function FitView() {
 }
 
 export function FitRow({ fit }: { fit: Fit }) {
+  const items = useAppSelector(selectItems);
+
   const d = new Date(fit.dateAdded);
-  return <div>{d.toString()}</div>;
+  return (
+    <>
+      <div>{d.toString()}</div>
+      {fit.items.length === 0 ? (
+        <p>no items yet</p>
+      ) : (
+        <ul>
+          {fit.items.map((itemId) => {
+            const item = items[itemId];
+            if (item == null) {
+              return <li>missing item {itemId}</li>;
+            }
+            return <li key={itemId}>{getItemName(item)}</li>;
+          })}
+        </ul>
+      )}
+    </>
+  );
 }
