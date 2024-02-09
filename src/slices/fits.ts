@@ -46,6 +46,25 @@ export const fitsSlice = createSlice({
         state.log.push(action.payload);
       },
     },
+    add: (state, action: PayloadAction<Fit>) => {
+      state.log.push(action.payload);
+    },
+
+    duplicateFrom: (
+      state,
+      action: PayloadAction<{
+        sourceId: string;
+        destinationId: string;
+        dateAdded: number;
+      }>
+    ) => {
+      const { sourceId, destinationId, dateAdded } = action.payload;
+      const sourceFit = state.log.find((fit) => fit.id === sourceId);
+      if (sourceFit) {
+        const nextFit = { ...sourceFit, id: destinationId, dateAdded };
+      }
+    },
+
     addItem: (
       state,
       action: PayloadAction<{ itemId: string; fitId: string }>
@@ -63,7 +82,22 @@ export const fitsSlice = createSlice({
       const { itemId, fitId } = action.payload;
       const idx = state.log.findIndex((fit) => fit.id === fitId);
       if (idx !== -1) {
-        state.log[idx].items.filter((id) => id !== itemId);
+        state.log[idx].items = state.log[idx].items.filter(
+          (id) => id !== itemId
+        );
+      }
+    },
+    toggleItem: (
+      state,
+      action: PayloadAction<{ itemId: string; fitId: string }>
+    ) => {
+      const { itemId, fitId } = action.payload;
+      const idx = state.log.findIndex((fit) => fit.id === fitId);
+      const fitItems = state.log[idx].items;
+      if (fitItems.includes(itemId)) {
+        state.log[idx].items = fitItems.filter((id) => id !== itemId);
+      } else {
+        state.log[idx].items.push(itemId);
       }
     },
   },
@@ -83,7 +117,7 @@ const filterFitsByTypeAndAppContext = (
   } else {
     switch (selectedAppRow) {
       case "root":
-        return fits;
+        return [getNewestFit(fits)];
       case "lastweek":
         return fits.filter((f) => f.dateAdded >= Date.now() - 86400 * 7 * 1000);
       default:
@@ -100,10 +134,7 @@ export const selectFitsBySelectedRow = createSelector(
   getSelectedAppView,
   filterFitsByTypeAndAppContext
 );
-
-export const selectCurrentFit = createSelector(
-  selectFits,
-  (fits: Fit[]): Fit | void => {
-    return fits.sort((a, b) => a.dateAdded - b.dateAdded)[0];
-  }
-);
+function getNewestFit(fits: Fit[]) {
+  return fits.toSorted((a, b) => b.dateAdded - a.dateAdded)[0];
+}
+export const selectCurrentFit = createSelector(selectFits, getNewestFit);

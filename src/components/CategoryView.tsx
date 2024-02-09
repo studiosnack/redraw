@@ -62,7 +62,7 @@ export function CategoryView() {
   const categoryItems = useAppSelector(selectItemsWithCurrentCategory);
 
   const currentFit = useAppSelector(selectCurrentFit);
-  const { addItem: addToCurrentFit } = bindActionCreators(
+  const { toggleItem: addOrRemoveFromFit } = bindActionCreators(
     fitsSlice.actions,
     dispatch
   );
@@ -88,7 +88,7 @@ export function CategoryView() {
                   <button
                     onClick={() => {
                       // console.log(item.id, currentFit.id);
-                      addToCurrentFit({
+                      addOrRemoveFromFit({
                         itemId: item.id,
                         fitId: currentFit.id,
                       });

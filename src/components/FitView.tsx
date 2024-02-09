@@ -1,6 +1,7 @@
 import * as React from "react";
 import { bindActionCreators } from "@reduxjs/toolkit";
 import { useAppSelector, useAppDispatch } from "../hooks";
+import { customId } from "../utils";
 import { fitsSlice, selectFitsBySelectedRow, type Fit } from "../slices/fits";
 import { selectItems, getItemName } from "../slices/items";
 import styled from "@emotion/styled";
@@ -61,13 +62,51 @@ export function FitView() {
   );
 }
 
+const DayFormatter = Intl.DateTimeFormat(undefined, { weekday: "long" });
+const timeOfDay = (date: Date) => {
+  const hour = date.getHours();
+  if (hour < 5) {
+    return "early morning";
+  } else if (hour >= 5 && hour < 12) {
+    return "morning";
+  } else if (hour >= 12 && hour < 14) {
+    return "midday";
+  } else if (hour >= 14 && hour < 18) {
+    return "afternoon";
+  } else if (hour >= 18 && hour < 21) {
+    return "evening";
+  } else if (hour >= 21 && hour <= 23) {
+    return "late night";
+  }
+};
+
+const FriendlyTimeFormatter = {
+  format: (date: Date) => `${DayFormatter.format(date)} ${timeOfDay(date)}`,
+};
+
 export function FitRow({ fit }: { fit: Fit }) {
   const items = useAppSelector(selectItems);
+  const dispatch = useAppDispatch();
+  const { duplicateFrom } = bindActionCreators(fitsSlice.actions, dispatch);
 
   const d = new Date(fit.dateAdded);
   return (
     <>
-      <div>{d.toString()}</div>
+      <div>
+        {FriendlyTimeFormatter.format(d)} outfit{" "}
+        <button
+          onClick={() => {
+            const payload = {
+              sourceId: fit.id,
+              destinationId: customId(),
+              dateAdded: Date.now(),
+            };
+            dispatch(duplicateFrom(payload));
+          }}
+        >
+          duplicate
+        </button>
+      </div>
       {fit.items.length === 0 ? (
         <p>no items yet</p>
       ) : (
