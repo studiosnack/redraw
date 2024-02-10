@@ -67,8 +67,10 @@ const timeOfDay = (date: Date) => {
   const hour = date.getHours();
   if (hour < 5) {
     return "early morning";
-  } else if (hour >= 5 && hour < 12) {
+  } else if (hour >= 5 && hour < 10) {
     return "morning";
+  } else if (hour >= 10 && hour < 12) {
+    return "late morning";
   } else if (hour >= 12 && hour < 14) {
     return "midday";
   } else if (hour >= 14 && hour < 18) {
@@ -101,7 +103,7 @@ export function FitRow({ fit }: { fit: Fit }) {
               destinationId: customId(),
               dateAdded: Date.now(),
             };
-            dispatch(duplicateFrom(payload));
+            duplicateFrom(payload);
           }}
         >
           duplicate

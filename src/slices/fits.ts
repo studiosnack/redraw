@@ -60,8 +60,10 @@ export const fitsSlice = createSlice({
     ) => {
       const { sourceId, destinationId, dateAdded } = action.payload;
       const sourceFit = state.log.find((fit) => fit.id === sourceId);
+      // console.log({ sourceId, sourceFit });
       if (sourceFit) {
         const nextFit = { ...sourceFit, id: destinationId, dateAdded };
+        state.log.push(nextFit);
       }
     },
 
