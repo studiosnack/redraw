@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getSavedState: () => {
     return ipcRenderer.invoke("get-mainstore") ?? {};
   },
+  getWindowState: () => {
+    return ipcRenderer.invoke("get-document") ?? {};
+  },
   showContextMenu: (
     categoryId: string,
     categoryName: string,

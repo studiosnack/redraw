@@ -36,7 +36,8 @@ import { getReduxStore } from "./reducer";
 
 async function getStateAndRender() {
   // @ts-ignore
-  const preloadedState = await window.electronAPI.getSavedState();
+  // const preloadedState = await window.electronAPI.getSavedState();
+  const preloadedState = await window.electronAPI.getWindowState();
   const reduxStore = getReduxStore(preloadedState);
 
   const appRoot = ReactDOMClient.createRoot(document.getElementById("app"));

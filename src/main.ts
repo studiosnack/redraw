@@ -9,6 +9,8 @@ import {
 } from "electron";
 import os from "node:os";
 import path from "node:path";
+import * as fs from "node:fs/promises";
+import { StringDecoder } from "node:string_decoder";
 
 import ElectronStore from "electron-store";
 
@@ -22,12 +24,27 @@ const reactDevToolsPath = path.join(
   "/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/5.0.0_22"
 );
 
+async function ingestAndReturnDocument(path: string): Promise<{}> {
+  let handle;
+  const decoder = new StringDecoder();
+  try {
+    const strContents = await fs.readFile(path, "utf8");
+    return JSON.parse(strContents);
+  } catch (err) {
+    throw new Error(err);
+  }
+  return {};
+}
+
 const store = new ElectronStore();
 ipcMain.on("store-set", (_evt, val) => {
   store.set("mainstore", val);
 });
 ipcMain.handle("get-mainstore", async (evt) => {
   return store.get("mainstore");
+});
+ipcMain.handle("get-document", async (evt, path) => {
+  return ingestAndReturnDocument(path);
 });
 ipcMain.handle(
   "show-context-menu",
@@ -70,8 +87,11 @@ ipcMain.handle(
 );
 const menu = new Menu();
 
-const createWindow = () => {
+const createWindow = async () => {
   // Create the browser window.
+
+  return;
+
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
