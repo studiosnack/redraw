@@ -30,9 +30,9 @@ export const getReduxStore = (preloadedState?: {
     },
     preloadedState,
     // @ts-ignore
-    middleware: (getDefaultMiddleware) => {
-      return getDefaultMiddleware().prepend(saveToElectronStoreMiddleware);
-    },
+    // middleware: (getDefaultMiddleware) => {
+    //   return getDefaultMiddleware().prepend(saveToElectronStoreMiddleware);
+    // },
   });
   return store;
 };
