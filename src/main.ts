@@ -85,20 +85,20 @@ ipcMain.handle(
     });
   }
 );
-const menu = new Menu();
+const menu = new Menu({});
 
-const createWindow = async () => {
+const createWindow = async (doc, filePath) => {
   // Create the browser window.
-
-  return;
 
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
-    transparent: true,
+    transparent: false,
     vibrancy: "under-window",
     roundedCorners: true,
-    titleBarStyle: "hidden",
+    title: path.basename(filePath),
+    titleBarStyle: "default",
+    titleBarOverlay: true,
     backgroundColor: "rgba(0,0,0,0)",
     visualEffectState: "followWindow",
     frame: true,
@@ -116,6 +116,12 @@ const createWindow = async () => {
     );
   }
 
+  console.log("sending initial doc event");
+  mainWindow.webContents.on("did-finish-load", () => {
+    mainWindow.webContents.send("receive-initial-document", doc);
+    mainWindow.setRepresentedFilename(filePath);
+    // mainWindow.setDocumentEdited(true);
+  });
   // Open the DevTools.
   mainWindow.webContents.openDevTools({ mode: "detach" });
 };
@@ -125,9 +131,9 @@ const createWindow = async () => {
 // Some APIs can only be used after this event occurs.
 // app.on("ready", createWindow);
 app.whenReady().then(async () => {
-  await session.defaultSession.loadExtension(reactDevToolsPath);
-  console.log(reactDevToolsPath);
-  createWindow();
+  // await session.defaultSession.loadExtension(reactDevToolsPath);
+  // console.log(reactDevToolsPath);
+  // createWindow();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -143,8 +149,19 @@ app.on("activate", () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    // createWindow();
   }
+});
+
+app.addRecentDocument("/Users/marcos/projects/redraw/stash.rdrw");
+
+app.on("open-file", async (evt, filePath) => {
+  evt.preventDefault();
+  // console.log("would open file at ", filePath);
+
+  const doc = await ingestAndReturnDocument(path.join(filePath, "config.json"));
+  // console.log("opening doc", doc.mainstore);
+  createWindow(doc.mainstore, filePath);
 });
 
 // In this file you can include the rest of your app's specific main process

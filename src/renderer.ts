@@ -32,7 +32,7 @@ import * as React from "react";
 import * as ReactDOMClient from "react-dom/client";
 
 import { App } from "./app";
-import { getReduxStore } from "./reducer";
+import { getReduxStore, type RootState } from "./reducer";
 
 async function getStateAndRender() {
   // @ts-ignore
@@ -44,4 +44,19 @@ async function getStateAndRender() {
   appRoot.render(React.createElement(App, { reduxStore }));
 }
 
-getStateAndRender();
+async function renderFromDocumentState(documentState: RootState) {
+  // @ts-ignore
+  // const preloadedState = await window.electronAPI.getSavedState();
+  // const preloadedState = await window.electronAPI.getWindowState();
+  const reduxStore = getReduxStore(documentState);
+
+  const appRoot = ReactDOMClient.createRoot(document.getElementById("app"));
+  appRoot.render(React.createElement(App, { reduxStore }));
+}
+// @ts-ignore
+window.electronAPI.onReceiveInitialDocument((evt, documentState: RootState) => {
+  console.log("oh wow, got a doc", documentState, evt);
+  renderFromDocumentState(documentState);
+});
+
+// getStateAndRender();
