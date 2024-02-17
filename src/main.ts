@@ -93,6 +93,7 @@ const menuTemplate = [
     submenu: [
       {
         label: "Open",
+        accelerator: "CommandOrControl+O",
         click: async (item, bw, evt) => {
           const { filePaths, canceled } = await dialog.showOpenDialog(bw, {
             filters: [{ name: "redraw docs", extensions: [".rdrw"] }],
