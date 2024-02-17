@@ -3,6 +3,7 @@ import {
   BrowserWindow,
   Menu,
   MenuItem,
+  dialog,
   ipcMain,
   ipcRenderer,
   session,
@@ -85,7 +86,33 @@ ipcMain.handle(
     });
   }
 );
-const menu = new Menu({});
+const menuTemplate = [
+  { role: "appMenu" },
+  {
+    label: "File",
+    submenu: [
+      {
+        label: "Open",
+        click: async (item, bw, evt) => {
+          const { filePaths, canceled } = await dialog.showOpenDialog(bw, {
+            filters: [{ name: "redraw docs", extensions: [".rdrw"] }],
+          });
+          console.log(canceled, filePaths);
+          if (!canceled) {
+            filePaths.forEach((path) => {
+              console.log(path);
+              openBrowserFromDocument(path);
+            });
+          }
+          // console.log("want to open", filename);
+        },
+      },
+      { role: "close" },
+    ],
+  },
+];
+const menu = Menu.buildFromTemplate(menuTemplate);
+Menu.setApplicationMenu(menu);
 
 const createWindow = async (doc, filePath) => {
   // Create the browser window.
@@ -155,13 +182,20 @@ app.on("activate", () => {
 
 app.addRecentDocument("/Users/marcos/projects/redraw/stash.rdrw");
 
+async function openBrowserFromDocument(packagePath: string) {
+  console.log(`attempting to own package at `, packagePath);
+  const doc = await ingestAndReturnDocument(
+    path.join(packagePath, "config.json")
+  );
+  // console.log("opening doc", doc.mainstore);
+  createWindow(doc.mainstore, packagePath);
+}
+
 app.on("open-file", async (evt, filePath) => {
   evt.preventDefault();
-  // console.log("would open file at ", filePath);
+  console.log("would open file at ", filePath);
 
-  const doc = await ingestAndReturnDocument(path.join(filePath, "config.json"));
-  // console.log("opening doc", doc.mainstore);
-  createWindow(doc.mainstore, filePath);
+  openBrowserFromDocument(filePath);
 });
 
 // In this file you can include the rest of your app's specific main process
