@@ -20,6 +20,9 @@ const saveToElectronStoreMiddleware = (midStore) => (next) => (action) => {
 
 export const getReduxStore = (preloadedState?: {
   categories: CategoryState;
+  application: AppState;
+  items: ItemState;
+  fits: FitState;
 }) => {
   let store = configureStore({
     reducer: {

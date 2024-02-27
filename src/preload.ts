@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       cb(evt, val);
     });
   },
+  onSaveDocument: (cb) =>
+    ipcRenderer.on("save-document", (evt, val) => cb(evt, val)),
   showContextMenu: (
     categoryId: string,
     categoryName: string,

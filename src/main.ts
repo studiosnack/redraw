@@ -13,6 +13,8 @@ import path from "node:path";
 import * as fs from "node:fs/promises";
 import { StringDecoder } from "node:string_decoder";
 
+import type { RootState } from "./reducer";
+
 import ElectronStore from "electron-store";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -92,13 +94,20 @@ const menuTemplate = [
     label: "File",
     submenu: [
       {
-        label: "Open",
+        label: "New",
+        accelerator: "CommandOrControl+N",
+        click: (item, bw, evt) => {
+          createWindow();
+        },
+      },
+      {
+        label: "Open…",
         accelerator: "CommandOrControl+O",
         click: async (item, bw, evt) => {
           const { filePaths, canceled } = await dialog.showOpenDialog(bw, {
             filters: [{ name: "redraw docs", extensions: [".rdrw"] }],
           });
-          console.log(canceled, filePaths);
+
           if (!canceled) {
             filePaths.forEach((path) => {
               console.log(path);
@@ -108,15 +117,40 @@ const menuTemplate = [
           // console.log("want to open", filename);
         },
       },
+      {
+        label: "Open Recent",
+        role: "recentDocuments",
+        submenu: [
+          {
+            label: "Clear Recent...",
+            role: "clearRecentDocuments",
+          },
+        ],
+      },
+      { type: "separator" },
+      {
+        label: "Save",
+        accelerator: "CommandOrControl+S",
+        click: (item, bw, evt) => {
+          bw.webContents.send("save-document");
+        },
+      },
+      { type: "separator" },
       { role: "close" },
     ],
   },
 ];
-const menu = Menu.buildFromTemplate(menuTemplate);
-Menu.setApplicationMenu(menu);
 
-const createWindow = async (doc, filePath) => {
+const createWindow = async (
+  doc?: RootState,
+  filePath?: string,
+  bounds?: Electron.Rectangle
+) => {
   // Create the browser window.
+  if (filePath) {
+    app.addRecentDocument(filePath);
+  }
+  const basePathTitle = filePath ? path.basename(filePath) : "New Drawer";
 
   const mainWindow = new BrowserWindow({
     width: 800,
@@ -124,7 +158,7 @@ const createWindow = async (doc, filePath) => {
     transparent: false,
     vibrancy: "under-window",
     roundedCorners: true,
-    title: path.basename(filePath),
+    title: basePathTitle,
     titleBarStyle: "default",
     titleBarOverlay: true,
     backgroundColor: "rgba(0,0,0,0)",
@@ -147,11 +181,40 @@ const createWindow = async (doc, filePath) => {
   console.log("sending initial doc event");
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.send("receive-initial-document", doc);
-    mainWindow.setRepresentedFilename(filePath);
-    // mainWindow.setDocumentEdited(true);
+
+    if (filePath) {
+      mainWindow.setRepresentedFilename(filePath);
+    }
   });
   // Open the DevTools.
   mainWindow.webContents.openDevTools({ mode: "detach" });
+
+  // register a window specific handler for load
+  mainWindow.webContents.ipc.handle(
+    "request-initial-document-store",
+    async () => {
+      return doc ?? undefined;
+    }
+  );
+
+  // register window-specific state event handlers
+  mainWindow.on("move", (_evt) => {
+    const bounds = mainWindow.getBounds();
+    console.log(`window ${basePathTitle} moved to ${JSON.stringify(bounds)}`);
+    // update position in recent docs list
+  });
+  mainWindow.on("will-resize", (evt, bounds) => {
+    console.log(`window ${basePathTitle} resized to ${JSON.stringify(bounds)}`);
+    // update size in recent docs list
+  });
+  mainWindow.on("close", (evt) => {
+    // remove from opened docs list
+    console.log(`closing window for ${filePath}`);
+    const openDocs: Array<{ path: string }> = store.get("app:opendocs") ?? [];
+    const nowOpenDocs = openDocs.filter((d) => d.path !== filePath);
+    store.set("app:opendocs", nowOpenDocs);
+    console.log("app:opendocs now", JSON.stringify(nowOpenDocs));
+  });
 };
 
 // This method will be called when Electron has finished
@@ -160,8 +223,21 @@ const createWindow = async (doc, filePath) => {
 // app.on("ready", createWindow);
 app.whenReady().then(async () => {
   // await session.defaultSession.loadExtension(reactDevToolsPath);
-  // console.log(reactDevToolsPath);
-  // createWindow();
+
+  // app.addRecentDocument("/Users/marcos/projects/redraw/stash.rdrw");
+
+  const recentDocs: string[] = store.get("app:recentdocs") ?? [];
+  console.log(`adding recent docs: ${recentDocs.join("\n")}`);
+  recentDocs.forEach((path) => app.addRecentDocument(path));
+
+  // console.log("app ready!");
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
+
+  // restorePreviouslyOpenedDocuments();
+});
+
+app.on("before-quit", (evt) => {
+  console.log("gonna quit!");
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -181,15 +257,35 @@ app.on("activate", () => {
   }
 });
 
-app.addRecentDocument("/Users/marcos/projects/redraw/stash.rdrw");
-
 async function openBrowserFromDocument(packagePath: string) {
   console.log(`attempting to own package at `, packagePath);
   const doc = await ingestAndReturnDocument(
     path.join(packagePath, "config.json")
   );
-  // console.log("opening doc", doc.mainstore);
+
+  // this .mainstore here is because in the current version of this file
+  // we store the entire redux store in the config.json under the mainstore path
+  // because of the earlier use of electron-store
+  // future versions... won't
   createWindow(doc.mainstore, packagePath);
+
+  // add path to the currently open docs list
+  const openDocs: Array<{ path: string }> = store.get("app:opendocs") ?? [];
+  const recentDocs: string[] = store.get("app:recentdocs") ?? [];
+  if (openDocs.findIndex((d) => d.path === packagePath) > -1) {
+    // we're reopening a document, no need to update recents
+    // or opendocs
+  } else {
+    // we're opening a document for the first time
+    openDocs
+      .filter(({ path }) => path !== packagePath)
+      .push({ path: packagePath });
+    store.set("app:opendocs", openDocs);
+    const updatedRecentDocs = recentDocs
+      .filter((pth) => pth !== packagePath)
+      .toSpliced(0, 0, packagePath);
+    store.set("app:recentdocs", updatedRecentDocs);
+  }
 }
 
 app.on("open-file", async (evt, filePath) => {

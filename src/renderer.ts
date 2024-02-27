@@ -38,17 +38,19 @@ async function getStateAndRender() {
   // @ts-ignore
   // const preloadedState = await window.electronAPI.getSavedState();
   const preloadedState = await window.electronAPI.getWindowState();
-  const reduxStore = getReduxStore(preloadedState);
+  const reduxStore = getReduxStore(preloadedState ?? undefined);
 
   const appRoot = ReactDOMClient.createRoot(document.getElementById("app"));
   appRoot.render(React.createElement(App, { reduxStore }));
 }
 
+let _getState;
 async function renderFromDocumentState(documentState: RootState) {
   // @ts-ignore
   // const preloadedState = await window.electronAPI.getSavedState();
   // const preloadedState = await window.electronAPI.getWindowState();
   const reduxStore = getReduxStore(documentState);
+  _getState = reduxStore.getState;
 
   const appRoot = ReactDOMClient.createRoot(document.getElementById("app"));
   appRoot.render(React.createElement(App, { reduxStore }));
@@ -59,4 +61,8 @@ window.electronAPI.onReceiveInitialDocument((evt, documentState: RootState) => {
   renderFromDocumentState(documentState);
 });
 
+// @ts-ignore
+window.electronAPI.onSaveDocument((evt, doc) => {
+  console.log("got asked to save document", _getState?.());
+});
 // getStateAndRender();
