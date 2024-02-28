@@ -18,6 +18,14 @@ const saveToElectronStoreMiddleware = (midStore) => (next) => (action) => {
   return updatedState;
 };
 
+// @ts-ignore
+const saveBackToFileMiddleware = (midstore) => (next) => (action) => {
+  const updatedState = next(action);
+  // @ts-ignore
+  window.electronAPI.sendDocumentToBeSaved(midstore.getState());
+  return updatedState;
+};
+
 export const getReduxStore = (preloadedState?: {
   categories: CategoryState;
   application: AppState;
@@ -33,9 +41,9 @@ export const getReduxStore = (preloadedState?: {
     },
     preloadedState,
     // @ts-ignore
-    // middleware: (getDefaultMiddleware) => {
-    //   return getDefaultMiddleware().prepend(saveToElectronStoreMiddleware);
-    // },
+    middleware: (getDefaultMiddleware) => {
+      return getDefaultMiddleware().prepend(saveBackToFileMiddleware);
+    },
   });
   return store;
 };

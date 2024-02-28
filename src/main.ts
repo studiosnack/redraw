@@ -27,9 +27,7 @@ const reactDevToolsPath = path.join(
   "/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/5.0.0_22"
 );
 
-async function ingestAndReturnDocument(path: string): Promise<{}> {
-  let handle;
-  const decoder = new StringDecoder();
+async function ingestAndReturnDocument<Doc = {}>(path: string): Promise<Doc> {
   try {
     const strContents = await fs.readFile(path, "utf8");
     return JSON.parse(strContents);
@@ -131,8 +129,8 @@ const menuTemplate = [
       {
         label: "Save",
         accelerator: "CommandOrControl+S",
-        click: (item, bw, evt) => {
-          bw.webContents.send("save-document");
+        click: (_item, bw: BrowserWindow, _evt) => {
+          bw.webContents.send("request-save-document");
         },
       },
       { type: "separator" },
@@ -179,23 +177,31 @@ const createWindow = async (
   }
 
   console.log("sending initial doc event");
+  /*
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.send("receive-initial-document", doc);
 
     if (filePath) {
       mainWindow.setRepresentedFilename(filePath);
     }
-  });
+  });*/
+
   // Open the DevTools.
   mainWindow.webContents.openDevTools({ mode: "detach" });
 
   // register a window specific handler for load
   mainWindow.webContents.ipc.handle(
-    "request-initial-document-store",
+    "request-initial-document-state",
     async () => {
       return doc ?? undefined;
     }
   );
+  // handle requests from the renderer to save the current document state
+  // usually called by the Save menu item or the reducer middleware which
+  // will attempt to autosave the document
+  mainWindow.webContents.ipc.handle("save-document", (evt, document) => {
+    saveDocumentAtPath(document, filePath);
+  });
 
   // register window-specific state event handlers
   mainWindow.on("move", (_evt) => {
@@ -258,7 +264,7 @@ app.on("activate", () => {
 });
 
 async function openBrowserFromDocument(packagePath: string) {
-  console.log(`attempting to own package at `, packagePath);
+  // console.log(`attempting to own package at `, packagePath);
   const doc = await ingestAndReturnDocument(
     path.join(packagePath, "config.json")
   );
@@ -294,6 +300,26 @@ app.on("open-file", async (evt, filePath) => {
 
   openBrowserFromDocument(filePath);
 });
+
+async function saveDocumentAtPath(document: RootState, packagePath?: string) {
+  if (path != null) {
+    // console.log("would have saved document at path", packagePath);
+    const meta = await ingestAndReturnDocument<{ version: number }>(
+      path.join(packagePath, "meta.json")
+    );
+    if (meta.version === 1) {
+      const allData = await ingestAndReturnDocument<{ mainstore: RootState }>(
+        path.join(packagePath, "config.json")
+      );
+      allData["mainstore"] = document;
+      const jsonifiedDoc = JSON.stringify(allData, null, 2);
+      console.log(jsonifiedDoc);
+      await fs.writeFile(path.join(packagePath, "config.json"), jsonifiedDoc);
+    }
+  } else {
+    console.log("nooping");
+  }
+}
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.

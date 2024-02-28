@@ -34,18 +34,8 @@ import * as ReactDOMClient from "react-dom/client";
 import { App } from "./app";
 import { getReduxStore, type RootState } from "./reducer";
 
-async function getStateAndRender() {
-  // @ts-ignore
-  // const preloadedState = await window.electronAPI.getSavedState();
-  const preloadedState = await window.electronAPI.getWindowState();
-  const reduxStore = getReduxStore(preloadedState ?? undefined);
-
-  const appRoot = ReactDOMClient.createRoot(document.getElementById("app"));
-  appRoot.render(React.createElement(App, { reduxStore }));
-}
-
-let _getState;
-async function renderFromDocumentState(documentState: RootState) {
+let _getState: () => RootState;
+async function renderFromDocumentState(documentState?: RootState) {
   // @ts-ignore
   // const preloadedState = await window.electronAPI.getSavedState();
   // const preloadedState = await window.electronAPI.getWindowState();
@@ -55,14 +45,19 @@ async function renderFromDocumentState(documentState: RootState) {
   const appRoot = ReactDOMClient.createRoot(document.getElementById("app"));
   appRoot.render(React.createElement(App, { reduxStore }));
 }
-// @ts-ignore
-window.electronAPI.onReceiveInitialDocument((evt, documentState: RootState) => {
-  console.log("oh wow, got a doc", documentState, evt);
-  renderFromDocumentState(documentState);
-});
 
 // @ts-ignore
-window.electronAPI.onSaveDocument((evt, doc) => {
-  console.log("got asked to save document", _getState?.());
+window.electronAPI.onSaveDocumentRequest((_evt) => {
+  // this is the save doc callback
+  const state = _getState?.();
+
+  // send back the document to the main process
+  window.electronAPI.sendDocumentToBeSaved(state);
 });
-// getStateAndRender();
+
+async function initDoc() {
+  const initDocumentState =
+    await window.electronAPI.requestInitialDocumentState();
+  renderFromDocumentState(initDocumentState);
+}
+initDoc();

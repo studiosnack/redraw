@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getWindowState: () => {
     return ipcRenderer.invoke("get-document") ?? {};
   },
+  requestInitialDocumentState: () => {
+    return ipcRenderer.invoke("request-initial-document-state") ?? undefined;
+  },
   onReceiveInitialDocument: (cb: (evt: IpcRendererEvent, val: any) => any) => {
     console.log("calling onReceiveInitialDocument and registering callback");
 
@@ -22,8 +25,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
       cb(evt, val);
     });
   },
-  onSaveDocument: (cb) =>
-    ipcRenderer.on("save-document", (evt, val) => cb(evt, val)),
+  /**
+    send a request from the main process to the renderer asking to
+    send the main document state back to the main process. usually
+    called by the menu item for save
+   */
+  onSaveDocumentRequest: (cb) =>
+    ipcRenderer.on("request-save-document", (evt, val) => cb()),
+  /**
+    send a json document to the main process to be written to disk
+   */
+  sendDocumentToBeSaved: (doc) => {
+    ipcRenderer.invoke("save-document", doc);
+  },
   showContextMenu: (
     categoryId: string,
     categoryName: string,
