@@ -119,7 +119,7 @@ const filterFitsByTypeAndAppContext = (
   } else {
     switch (selectedAppRow) {
       case "root":
-        return [getNewestFit(fits)];
+        return getNewestFit(fits) ? [getNewestFit(fits)] : [];
       case "lastweek":
         return fits.filter((f) => f.dateAdded >= Date.now() - 86400 * 7 * 1000);
       default:
