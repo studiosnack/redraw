@@ -187,7 +187,7 @@ const createWindow = async (
   });*/
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools({ mode: "detach" });
+  // mainWindow.webContents.openDevTools({ mode: "detach" });
 
   // register a window specific handler for load
   mainWindow.webContents.ipc.handle(
@@ -302,7 +302,7 @@ app.on("open-file", async (evt, filePath) => {
 });
 
 async function saveDocumentAtPath(document: RootState, packagePath?: string) {
-  if (path != null) {
+  if (packagePath != null) {
     // console.log("would have saved document at path", packagePath);
     const meta = await ingestAndReturnDocument<{ version: number }>(
       path.join(packagePath, "meta.json")
@@ -317,7 +317,7 @@ async function saveDocumentAtPath(document: RootState, packagePath?: string) {
       await fs.writeFile(path.join(packagePath, "config.json"), jsonifiedDoc);
     }
   } else {
-    console.log("nooping");
+    console.log("cowardly refusing to save a document");
   }
 }
 

@@ -8,7 +8,18 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 const config: ForgeConfig = {
   packagerConfig: {
     icon: "redraw",
-    extendInfo: {},
+    appBundleId: "cx.generic.redraw",
+    extendInfo: {
+      CFBundleDocumentTypes: [
+        {
+          CFBundleTypeExtensions: ["rdrw"],
+          CFBundleTypeIconFile: "redraw.icns",
+          CFBundleTypeRole: "Editor",
+          CFBundleTypeName: "Redraw Collection",
+          LSTypeIsPackage: true,
+        },
+      ],
+    },
   },
   rebuildConfig: {},
   makers: [
