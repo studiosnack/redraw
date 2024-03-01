@@ -148,7 +148,9 @@ const createWindow = async (
   if (filePath) {
     app.addRecentDocument(filePath);
   }
-  const basePathTitle = filePath ? path.basename(filePath) : "New Drawer";
+  const basePathTitle = filePath
+    ? path.basename(filePath).replace(".rdrw", "")
+    : "New Drawer";
 
   const mainWindow = new BrowserWindow({
     width: 800,
@@ -175,8 +177,6 @@ const createWindow = async (
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
     );
   }
-
-  console.log("sending initial doc event");
   /*
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.send("receive-initial-document", doc);
@@ -187,7 +187,9 @@ const createWindow = async (
   });*/
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools({ mode: "detach" });
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
 
   // register a window specific handler for load
   mainWindow.webContents.ipc.handle(
@@ -200,7 +202,10 @@ const createWindow = async (
   // usually called by the Save menu item or the reducer middleware which
   // will attempt to autosave the document
   mainWindow.webContents.ipc.handle("save-document", (evt, document) => {
-    saveDocumentAtPath(document, filePath);
+    saveDocumentAtPath(document, filePath, mainWindow);
+  });
+  mainWindow.webContents.ipc.handle("autosave-document", (evt, document) => {
+    saveDocumentAtPath(document, filePath, filePath ? mainWindow : undefined);
   });
 
   // register window-specific state event handlers
@@ -301,7 +306,11 @@ app.on("open-file", async (evt, filePath) => {
   openBrowserFromDocument(filePath);
 });
 
-async function saveDocumentAtPath(document: RootState, packagePath?: string) {
+async function saveDocumentAtPath(
+  document: RootState,
+  packagePath?: string,
+  bw?: BrowserWindow
+) {
   if (packagePath != null) {
     // console.log("would have saved document at path", packagePath);
     const meta = await ingestAndReturnDocument<{ version: number }>(
@@ -316,8 +325,22 @@ async function saveDocumentAtPath(document: RootState, packagePath?: string) {
       console.log(jsonifiedDoc);
       await fs.writeFile(path.join(packagePath, "config.json"), jsonifiedDoc);
     }
-  } else {
-    console.log("cowardly refusing to save a document");
+  } else if (bw != null) {
+    const { filePath, canceled } = await dialog.showSaveDialog(bw, {
+      defaultPath: "New Drawer.rdrw",
+      properties: ["treatPackageAsDirectory", "createDirectory"],
+    });
+    if (canceled) {
+      console.log("cowardly refusing to save a document");
+    } else {
+      await fs.mkdir(filePath);
+      await fs.writeFile(path.join(filePath, "meta.json"), `{"version": 1}`);
+      const allData = { mainstore: document };
+      await fs.writeFile(
+        path.join(filePath, "config.json"),
+        JSON.stringify(allData, null, 2)
+      );
+    }
   }
 }
 

@@ -22,7 +22,7 @@ const saveToElectronStoreMiddleware = (midStore) => (next) => (action) => {
 const saveBackToFileMiddleware = (midstore) => (next) => (action) => {
   const updatedState = next(action);
   // @ts-ignore
-  window.electronAPI.sendDocumentToBeSaved(midstore.getState());
+  window.electronAPI.sendDocumentToBeAutosaved(midstore.getState());
   return updatedState;
 };
 

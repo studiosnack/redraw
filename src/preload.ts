@@ -38,6 +38,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   sendDocumentToBeSaved: (doc) => {
     ipcRenderer.invoke("save-document", doc);
   },
+  sendDocumentToBeAutosaved: (doc) => {
+    ipcRenderer.invoke("autosave-document", doc);
+  },
   showContextMenu: (
     categoryId: string,
     categoryName: string,
