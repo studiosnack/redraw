@@ -1,5 +1,7 @@
 # redraw
 
+![a screenshot of this app](https://github.com/studiosnack/redraw/blob/main/appscreen.png?raw=true)
+
 redraw is a sort of hastily implemented electron app that scratches several itches:
 1. it saves its file content in a mac package/dir
 1. its whole purpose is to act as a catalog of clothes that you can (eventually) search and be able to answer dumb questions like 
