@@ -1,0 +1,12 @@
+electron process model:
+
+- you can send messages from the renderer to the main process using
+  ipcRenderer.send() -> ipcMain.on()
+
+- you can get results from the renderer to the main process using
+  ipcRenderer.invoke -> ipcMain.handle()
+
+
+
+- you can send a message from main to the renderer by calling
+  someBrowserWindow.webContents.send()
