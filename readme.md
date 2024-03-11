@@ -17,3 +17,30 @@ Also, apologies to anyone if you were using .rdrw as an extension, i just made i
 
 ✌🏼
 
+## .rdrw package contents
+
+a redraw database is made of two files (for now)
+- config.json
+- meta.json
+
+the config.json file is the most interesting and it looks a lot like the redux state serialized to disk. oops!
+
+**config.json**
+```typescript
+type RdrwConfig = {
+  mainstore: RootState,
+}
+```
+where `RootState` is basically this https://github.com/studiosnack/redraw/blob/main/src/reducer.ts#L29-L34
+
+the meta.json file is less interesting, i added it once i realized _i could_ because i had a problem where i had two versions of config.json and knew that i would probably want to upgrade them to a single version (or even a sqlite backed version...) later.
+
+**meta.json**
+```typescript
+type RdrwMeta = {
+  version: 1
+}
+```
+
+right now there is only version 1, i'm sure that will probably never change and end up being a huge pain for me.
+
