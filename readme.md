@@ -17,6 +17,8 @@ A lot of this is really about getting to understand what the rough edges in elec
 
 Also, apologies to anyone if you were using .rdrw as an extension, i just made it up for this, but like, it's not like it matters unless you install this...
 
+there is one major goal however in the current ui/ux or whatever, it's that you just sometimes want to create a rough catalog and you don't need photos or detailed information, you can embed a lot of that in the name of the item and just move on with your life. for what it's worth, i've tried doing this in airtable and it's somehow even just more arduous than this, so i don't know what that says about the problem domain.
+
 ✌🏼
 
 ## .rdrw package contents
@@ -46,3 +48,6 @@ type RdrwMeta = {
 
 right now there is only version 1, i'm sure that will probably never change and end up being a huge pain for me.
 
+## Release
+
+i'm providing a release here, but like, it's not great, but if you're trying to do something like this for yourself (i.e. persist redux to some bundle you can serde yourself back from) then maybe it's useful for you, the actual sidebar stuff and the non-design of the rest is not super compelling i'm sorry to say.
